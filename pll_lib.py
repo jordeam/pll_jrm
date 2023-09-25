@@ -44,10 +44,11 @@ class pll_jrm:
     k_p: float
     k_i: float
 
-    def __init__(self, Tpwm: float, k_p: float, omega0: float):
+    def __init__(self, Tpwm: float, k_p: float, k_i: float, omega0: float):
         self.theta = 0.0
         self.T = Tpwm
         self.k_p = k_p
+        self.k_i = k_i
         self.omega = omega0
         self.v_d_ = 0.0
         self.v_q_ = 0.0
@@ -61,7 +62,7 @@ class pll_jrm:
         self.v_d_ = kf * v_d + (1.0 - kf) * self.v_d_
         self.v_q_ = kf * v_q + (1.0 - kf) * self.v_q_
         theta_e = m.atan2(self.v_q_, self.v_d_);
-        self.omega_acc += self.k_p * 100.0 * self.T * theta_e
+        self.omega_acc += self.k_i * self.T * theta_e
         omega_g = self.omega_acc + self.k_p * theta_e
         self.theta_ge += omega_g * self.T
         self.theta = mu.cycle(self.theta_ge + theta_e)
