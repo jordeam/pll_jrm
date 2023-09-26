@@ -25,3 +25,11 @@ def cycle(x: float) -> float:
     x -= math.floor(x)
     return x * 2 * math.pi
 
+
+def mcycle(x: float) -> float:
+    x /= 2 * math.pi
+    x -= math.floor(x)
+    if x > 0.5:
+        x -= 1.0
+    return x * 2 * math.pi
+
