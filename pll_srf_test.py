@@ -69,11 +69,11 @@ def plls_test_ramp(omega0: float = 2*m.pi*10, omegaf: float = 2*m.pi*1e3, tf: fl
 def test_mobavg(f: float, Tpwm: float, tf: float):
     size: int = int(1.0 / (f * Tpwm))
     maf = fi.MobAvg(size)
-    tau = 1 / f
-    lpf1 = fi.DLPF(tau, Tpwm)
-    lpf2 = fi.DLPF(tau / 2, Tpwm)
-    lpf3 = fi.DLPF(tau / 3, Tpwm)
-    lpf5 = fi.DLPF(tau / 5, Tpwm)
+    omega = 2 * m.pi * f
+    lpf1 = fi.DLPF(1 / omega, Tpwm)
+    lpf2 = fi.DLPF(1 / (2 * omega), Tpwm)
+    lpf3 = fi.DLPF(1 / (3 * omega), Tpwm)
+    lpf5 = fi.DLPF(1 / (5 * omega), Tpwm)
     with open('mobavg_test.dat', 'w', ) as fo:
         fo.write(f'{0} {0} {0} {0} {0}\n')
         t: float = Tpwm
