@@ -2,6 +2,7 @@ import math_utils as mu
 import math as m
 import tranforms as tt
 import pll_lib as pll
+import filters as fi
 
 filename = 'pll_srf.dat'
 f_grid = 60.0
@@ -9,7 +10,7 @@ w_grid = 2 * m.pi * f_grid
 Tpwm = 100e-6
 V = 220
 
-def plls_test_step(omega0:float=2*m.pi*60, t1:float=0.5, omega1:float=2*m.pi*30, tf:float=4.0):
+def plls_test_step(omega0: float = 2*m.pi*60, t1: float = 0.5, omega1: float = 2*m.pi*30, tf: float = 4.0):
     pllsrf = pll.PllSrf(Tpwm, 1.0, 1.0, w_grid)
     plljrm = pll.PllJrm(Tpwm, 240.0, 1800.0, w_grid)
     pllqt1 = pll.PllQT1(Tpwm, 57.0, w_grid)
@@ -38,7 +39,7 @@ def plls_test_step(omega0:float=2*m.pi*60, t1:float=0.5, omega1:float=2*m.pi*30,
         print("Finished\n")
 
 
-def plls_test_ramp(omega0:float=2*m.pi*10, omegaf:float=2*m.pi*1e3, tf:float=4.0):
+def plls_test_ramp(omega0: float = 2*m.pi*10, omegaf: float = 2*m.pi*1e3, tf: float = 4.0):
     pllsrf = pll.PllSrf(Tpwm, 1.0, 1.0, w_grid)
     plljrm = pll.PllJrm(Tpwm, 240.0, 1800.0, w_grid)
     pllqt1 = pll.PllQT1(Tpwm, 57.0, w_grid)
@@ -63,4 +64,22 @@ def plls_test_ramp(omega0:float=2*m.pi*10, omegaf:float=2*m.pi*1e3, tf:float=4.0
             print(f'{t} {v_a} {theta_grid} {err_srf} {pllsrf.omega} {err_jrm} {plljrm.omega} {ws} {err_qt1} {pllqt1.omega}', file=f)
             t += Tpwm
         print("Finished\n")
+
+
+def test_mobavg(f: float, Tpwm: float, tf: float):
+    size: int = int(1.0 / (f * Tpwm))
+    maf = fi.MobAvg(size)
+    tau = 1 / f
+    lpf1 = fi.DLPF(tau, Tpwm)
+    lpf2 = fi.DLPF(tau / 2, Tpwm)
+    lpf3 = fi.DLPF(tau / 3, Tpwm)
+    lpf5 = fi.DLPF(tau / 5, Tpwm)
+    with open('mobavg_test.dat', 'w', ) as fo:
+        fo.write(f'{0} {0} {0} {0} {0}\n')
+        t: float = Tpwm
+        while t < tf:
+            # insert a unit step
+            v = 1.0
+            fo.write(f'{t} {maf.update_avg(v)} {lpf1.update(v)} {lpf2.update(v)} {lpf3.update(v)} {lpf5.update(v)} \n')
+            t += Tpwm
 
