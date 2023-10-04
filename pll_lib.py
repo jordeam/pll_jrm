@@ -4,7 +4,7 @@ import math as m
 
 
 class PllSrf:
-    """SRF PLL"""
+    """Classic SRF PLL"""
 
     def __init__(self, T_sample: float, k_p: float, k_i: float, omega_nominal: float):
         self.T: float = T_sample  # time sample
@@ -12,8 +12,6 @@ class PllSrf:
         self.k_i: float = k_i
         self.omega_n: float = omega_nominal  # grid nominal frequency
         self.omega: float = 0.0  # estimated grid frequency
-        self.v_q_: float = 0.0  # filtered q axis voltage
-        self.v_q: float = 0.0  # axis voltage
         self.v_q_acc: float = 0.0  # accumulated v_q value
         self.theta = 0.0  # estimated grid angle
 
@@ -30,7 +28,7 @@ class PllSrf:
 class PllJrm:
     """Proposed PLL"""
 
-    def __init__(self, Tpwm: float, k_p: float, k_i: float, omega0: float):
+    def __init__(self, Tpwm: float, k_p: float, k_i: float, omega_nom: float):
         self.theta: float = 0.0  # estimated grid frequency
         self.T: float = Tpwm  # time sample
         self.k_p: float = k_p
@@ -39,7 +37,7 @@ class PllJrm:
         self.v_d_: float = 0.0
         self.v_q_: float = 0.0
         self.theta_ge: float = 0.0
-        self.omega_acc: float = 0.0  # accumulated omega
+        self.omega_acc: float = omega_nom  # accumulated omega
         self.theta: float  # estimated grid angle
 
     def step(self, v_alpha: float, v_beta: float) -> float:
@@ -59,7 +57,7 @@ class PllJrm:
         return self.theta
 
 
-class PllQT1:
+class PllQt1:
     """Quase Type 1 PLL (Golestan)"""
 
     def __init__(self, Tpwm: float, k_p: float, omega_nominal: float):
@@ -85,4 +83,23 @@ class PllQT1:
         self.omega = self.k_p * theta_e + self.omega_n
         self.theta_o += self.omega * self.T
         self.theta = mu.cycle(self.theta_o + theta_e)
+        return self.theta
+
+class PllAdapSRF (PllSrf):
+    def __init__(self, Tpwm: float, k_v: float, lambda_fc: float, k_p: float, k_i: float, omega_n: float):
+        super().__init__(Tpwm, k_p, k_i, omega_n)
+        self.k_v:float = k_v
+        self.k_f:float = Tpwm * k_v
+        self.lambda_fc:float = lambda_fc
+        self.v_PPC: float = 0
+
+    def step(self, v_alpha: float, v_beta: float):
+        v_d, v_q = tr.alphabeta_2_dq(v_alpha, v_beta, self.theta)
+        self.v_PPC = self.k_f * v_d + (1.0 - self.k_f) * self.v_PPC
+        delta_theta = v_q / self.v_PPC
+        eq_22 = 1 + self.lambda_fc * self.v_PPC * delta_theta / abs(self.omega)
+        self.v_q_acc += self.k_i * self.T
+        self.omega = delta_theta * self.k_p * eq_22 + self.v_q_acc + self.omega_n
+        self.theta += self.omega * self.T
+        self.theta = mu.cycle(self.theta)
         return self.theta

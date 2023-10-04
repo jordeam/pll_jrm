@@ -1,7 +1,7 @@
 fn = 'mobavg_test.dat'
 set yrange [0:1.1]
 set xlabel '$t$(s)'
-
+set key bottom right
 plot \
      fn using 1:2 with lines title 'MAF',\
      fn using 1:3 with lines title 'LPF: $\tau = 1/\omega$', \
